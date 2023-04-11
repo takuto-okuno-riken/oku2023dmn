@@ -3,6 +3,7 @@ Code for a manuscipt of the default mode network in common marmoset (2023)
 
 ## Requirements: Software
 * MATLAB R2019b or later
+* Parallel Computing Toolbox ver7.1 or later
 * [VARDNN Toolbox](https://github.com/takuto-okuno-riken/vardnn)
 
 Please download the [VARDNN Toolbox](https://github.com/takuto-okuno-riken/vardnn) and "Add Path" in the MATLAB before using this code.
