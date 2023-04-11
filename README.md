@@ -28,6 +28,9 @@ P-value=0.05, T-value=1.6525
 Tmax of GLM6 marmoAuCube1s34waM3_1CTukey8 : audio tmax=9.2829, tcnt=8111, mrv=1.6545
 ...
 ~~~
+<div align="center">
+<img src="data/demo1.jpg">
+</div>
 
 After calculation of GLM analysis for individual sessions, mixed-effects model (2nd analysis) could be applied.
 ~~~
