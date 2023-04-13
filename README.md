@@ -16,7 +16,7 @@ Please download the [VARDNN Toolbox](https://github.com/takuto-okuno-riken/vardn
 
 ## Demo Codes
 <b>Demo</b><br>
-The first demo shows the calculation of GLM analysis for auditory task-fMRI data in common marmoset.<br>
+The first demo shows the calculation of GLM analysis for auditory task-fMRI data in common marmoset (Fig.2a and b).<br>
 Pre-processed NIfTI files should be downloaded from [zendo](https://zendo/) and extracted under 'data' directory before running this code.
 ~~~
 >> marmoAudGLMindividual
@@ -33,7 +33,7 @@ Tmax of GLM6 marmoAuCube1s34waM3_1CTukey8 : audio tmax=9.2829, tcnt=8111, mrv=1.
 <img src="data/demo1.jpg">
 </div>
 
-After calculation of GLM analysis for individual sessions, mixed-effects model (2nd analysis) could be applied.
+After calculation of GLM analysis for individual sessions, mixed-effects model (2nd analysis) could be applied (Fig.2c).
 ~~~
 >> marmoAudGLMmixed
 process GLM with Tukey-Taper(8) estimation ...
@@ -43,7 +43,7 @@ Tmax of GLM6marmoAudD 2nd-mix-Tukey8full : audio tmax=50.7377, tcnt=1759, mrv=0.
 ~~~
 
 This demo shows fingerprint analysis of awake marmoset.
-T-values of sub-cortical voxels of correlating with DMN time-series and FPN time-series are shown.
+T-values of sub-cortical voxels of correlating with DMN time-series and FPN time-series are shown (Fig.4a and b top).
 ~~~
 >> marmoAwakeFingerprint
 process Mixed-Effects correlation ...
