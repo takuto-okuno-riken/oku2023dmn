@@ -41,3 +41,19 @@ done t=0.5378sec
 P-value=0.001, T-value=4.1437
 Tmax of GLM6marmoAudD 2nd-mix-Tukey8full : audio tmax=50.7377, tcnt=1759, mrv=0.0036622
 ~~~
+
+This demo shows fingerprint analysis of awake marmoset.
+T-values of sub-cortical voxels of correlating with DMN time-series and FPN time-series are shown.
+~~~
+>> marmoAwakeFingerprint
+process Mixed-Effects correlation ...
+process seed analysis of correlation ...
+process session(1) t=0.014393
+...
+P-value=0.05, T-value=1.6779
+Tmax (source) of seedFingerprintMarmoAwakemix-Corr : FPN tmax=26.9124, tcnt=746, mrv=NaN
+Tmax (source) of seedFingerprintMarmoAwakemix-Corr : DMN tmax=11.1839, tcnt=585, mrv=NaN
+~~~
+<div align="center">
+<img src="data/demo2.jpg">
+</div>
