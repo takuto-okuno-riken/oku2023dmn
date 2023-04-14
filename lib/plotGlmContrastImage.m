@@ -125,10 +125,10 @@ function [Ts, Tth, Vts, Vfs, Tmaxs, Tcnts, mrvs] = plotGlmContrastImage(contname
         sgtitle(['GLM contrast (minus) of ' sessionName ' : ' contnames{j}],'Color','white');
 
         if ~isempty(zidx)
-            figure; plotNifti3DZSlice(Vp,zidx,rangePlus,cmap,backV,gray,0.15);
+            figure; plotNifti3DZSlice(Vp,zidx,rangePlus,cmap,backV,gray,true,0.15);
             sgtitle(['GLM contrast (plus) of ' sessionName ' : ' contnames{j}],'Color','white');
 
-            figure; plotNifti3DZSlice(Vm,zidx,rangeMinus,cmap,backV,gray,0.15);
+            figure; plotNifti3DZSlice(Vm,zidx,rangeMinus,cmap,backV,gray,true,0.15);
             sgtitle(['GLM contrast (minus) of ' sessionName ' : ' contnames{j}],'Color','white');
         end
 

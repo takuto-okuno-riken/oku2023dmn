@@ -7,12 +7,14 @@
 %  cmap         color map for V (default: parula)
 %  backV        3D background volume 
 %  backcmap     color map for backV (default: gray)
+%  isRtoL       X axis is right to left (default: true)
 %  bRate        background color rate (default: 0.3)
 %  fRate        front color rate (default: 0.8)
 
-function plotNifti3DZSlice(V, zidx, crange, cmap, backV, backcmap, bRate, fRate)
-    if nargin < 8, fRate = 0.8; end
-    if nargin < 7, bRate = 0.3; end
+function plotNifti3DZSlice(V, zidx, crange, cmap, backV, backcmap, isRtoL, bRate, fRate)
+    if nargin < 9, fRate = 0.8; end
+    if nargin < 8, bRate = 0.3; end
+    if nargin < 7, isRtoL = true; end
     if nargin < 6, backcmap = gray; end
     if nargin < 5, backV = []; end
     if nargin < 4, cmap = parula; end
@@ -37,7 +39,8 @@ function plotNifti3DZSlice(V, zidx, crange, cmap, backV, backcmap, bRate, fRate)
 
         XY = V(:,:,z);
         % rotate
-        XY = rot90(squeeze(XY)); %flipud(squeeze(XY)); % from top (right should be bottom)
+        XY = rot90(squeeze(XY)); % from top (right should be bottom)
+        if isRtoL, XY = fliplr(XY); end
         % fixed color range to [0 1]
         XY = (XY - crange(1)) / (crange(2) - crange(1)); XY(XY<0) = 0; XY(XY>1) = 1; XY(isnan(XY)) = 0;
         % gray to index map
@@ -46,7 +49,8 @@ function plotNifti3DZSlice(V, zidx, crange, cmap, backV, backcmap, bRate, fRate)
         if ~isempty(backV)
             XYb = backV(:,:,z);
             % rotate
-            XYb = rot90(squeeze(XYb)); %flipud(squeeze(XYb)); % from top (right should be bottom)
+            XYb = rot90(squeeze(XYb));  % from top (right should be bottom)
+            if isRtoL, XYb = fliplr(XYb); end
             % fixed color range to [0 0.33]
             mb = single(nanmax(backV,[],'all'));
             XYb = single(XYb) / mb; XYb(XYb<0.01) = 0; XYb(isnan(XYb)) = 0;

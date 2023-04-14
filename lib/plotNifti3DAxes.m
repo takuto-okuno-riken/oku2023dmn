@@ -7,12 +7,14 @@
 %  cmap         color map for V (default: parula)
 %  backV        3D background volume 
 %  backcmap     color map for backV (default: gray)
+%  isRtoL       X axis is right to left (default: true)
 %  bRate        background color rate (default: 0.3)
 %  fRate        front color rate (default: 0.8)
 
-function plotNifti3DAxes(V, operation, range, cmap, backV, backcmap, bRate, fRate)
-    if nargin < 8, fRate = 0.8; end
-    if nargin < 7, bRate = 0.3; end
+function plotNifti3DAxes(V, operation, range, cmap, backV, backcmap, isRtoL, bRate, fRate)
+    if nargin < 9, fRate = 0.8; end
+    if nargin < 8, bRate = 0.3; end
+    if nargin < 7, isRtoL = true; end
     if nargin < 6, backcmap = gray; end
     if nargin < 5, backV = []; end
     if nargin < 4, cmap = parula; end
@@ -57,7 +59,9 @@ function plotNifti3DAxes(V, operation, range, cmap, backV, backcmap, bRate, fRat
     % rotate
     YZ = rot90(squeeze(YZ)); % from back (right should be right)
     XZ = rot90(squeeze(XZ));
-    XY = rot90(squeeze(XY)); %flipud(squeeze(XY)); % from top (right should be bottom)
+    if isRtoL, XZ = fliplr(XZ); end
+    XY = rot90(squeeze(XY)); % from top (right should be bottom)
+    if isRtoL, XY = fliplr(XY); end
     % fixed color range to [0 1]
     YZ = (YZ - range(1)) / (range(2) - range(1)); YZ(YZ<0) = 0; YZ(YZ>1) = 1; YZ(isnan(YZ)) = 0;
     XZ = (XZ - range(1)) / (range(2) - range(1)); XZ(XZ<0) = 0; XZ(XZ>1) = 1; XZ(isnan(XZ)) = 0;
@@ -74,7 +78,9 @@ function plotNifti3DAxes(V, operation, range, cmap, backV, backcmap, bRate, fRat
         % rotate
         YZb = rot90(squeeze(YZb)); % from back (right should be right)
         XZb = rot90(squeeze(XZb));
-        XYb = rot90(squeeze(XYb)); %flipud(squeeze(XYb)); % from top (right should be bottom)
+        if isRtoL, XZb = fliplr(XZb); end
+        XYb = rot90(squeeze(XYb)); % from top (right should be bottom)
+        if isRtoL, XYb = fliplr(XYb); end
         % fixed color range to [0 0.33]
         mb = single(nanmax(backV,[],'all'));
         YZb = single(YZb) / mb; YZb(YZb<0.01) = 0; YZb(isnan(YZb)) = 0;

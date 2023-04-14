@@ -115,10 +115,10 @@ function [CVsp, CVsm, CVtp, CVtm, Tmaxs, Tcnts, mrvs] = plotSeedCorrImage(tgName
         sgtitle(['From Seeds (minus) of ' sessionName ' : ' tgNames{j}],'Color','white');
 
         if ~isempty(zidx)
-            figure; plotNifti3DZSlice(Vp,zidx,rangePlus,cmap,backV,gray,0.15);
+            figure; plotNifti3DZSlice(Vp,zidx,rangePlus,cmap,backV,gray,true,0.15);
             sgtitle(['From Seeds (plus) of ' sessionName ' : ' tgNames{j}],'Color','white');
 
-            figure; plotNifti3DZSlice(Vm,zidx,rangeMinus,cmap,backV,gray,0.15);
+            figure; plotNifti3DZSlice(Vm,zidx,rangeMinus,cmap,backV,gray,true,0.15);
             sgtitle(['From Seeds (minus) of ' sessionName ' : ' tgNames{j}],'Color','white');
         end
 
@@ -170,10 +170,10 @@ function [CVsp, CVsm, CVtp, CVtm, Tmaxs, Tcnts, mrvs] = plotSeedCorrImage(tgName
             sgtitle(['To Seeds (minus) of ' sessionName ' : ' tgNames{j}],'Color','white');
     
             if ~isempty(zidx)
-                figure; plotNifti3DZSlice(Vp,zidx,rangePlus,cmap,backV,gray,0.15);
+                figure; plotNifti3DZSlice(Vp,zidx,rangePlus,cmap,backV,gray,true,0.15);
                 sgtitle(['To Seeds (plus) of ' sessionName ' : ' tgNames{j}],'Color','white');
     
-                figure; plotNifti3DZSlice(Vm,zidx,rangeMinus,cmap,backV,gray,0.15);
+                figure; plotNifti3DZSlice(Vm,zidx,rangeMinus,cmap,backV,gray,true,0.15);
                 sgtitle(['To Seeds (minus) of ' sessionName ' : ' tgNames{j}],'Color','white');
             end
 

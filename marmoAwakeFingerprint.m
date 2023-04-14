@@ -25,6 +25,7 @@ function checkSeedFingerprint(atlasSize, compName, compNum, stat, compnames, com
     sub = 'data\sp2_label_512_v1.0.0SubAnethfMRI.nii';
     subinfo = niftiinfo([sub '.gz']);
     subV = niftiread(subinfo);
+    subV(subV==20) = 0; % ignore whole brain mask
     subIdx = find(subV(:)>0);
 
     sessionName = ['seedFingerprintMarmo' stat];
