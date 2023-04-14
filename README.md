@@ -1,3 +1,6 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-success.svg)](https://opensource.org/licenses/MIT)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7827225.svg)](https://doi.org/10.5281/zenodo.7827225)
+
 # oku2023dmn
 Code for a manuscipt of the default mode network in common marmoset (2023)
 
@@ -17,7 +20,7 @@ Please download the [VARDNN Toolbox](https://github.com/takuto-okuno-riken/vardn
 ## Demo Codes
 <b>Demo</b><br>
 The first demo shows the calculation of GLM analysis for auditory task-fMRI data in common marmoset (Fig.2a and b).<br>
-Pre-processed NIfTI files should be downloaded from [zendo](https://zendo/) and extracted under 'data' directory before running this code.
+Pre-processed NIfTI files should be downloaded from [zenodo](https://doi.org/10.5281/zenodo.7827225) and extracted under 'data' directory before running this code.
 ~~~
 >> marmoAudGLMindividual
 loading : data/s34waM3_1.nii.gz
