@@ -15,10 +15,12 @@ function marmoAudGLMmixed
         };
     path = 'results/glm/';
 
+    % template nii for save data
+    tempNii = 'data\s34waM3_1.nii.gz';
     % load background nii
-    tempNii = 'data\sp2_avg_mri_exvivo_t2wi_v1.0.0Audio.nii.gz';
-    tempinfo = niftiinfo(tempNii);
-    tempV = niftiread(tempinfo);
+    backNii = 'data\sp2_avg_mri_exvivo_t2wi_v1.0.0Audio.nii.gz';
+    backinfo = niftiinfo(backNii);
+    backV = niftiread(backinfo);
 
     % load atlas of cube clusters
     cubename = ['marmoAuCube' num2str(atlasSize)'];
@@ -34,6 +36,7 @@ function marmoAudGLMmixed
     rangeMinus = [nan 15];
 
     tuM = 8; % might be best Tukey-window
+    isRtoL = true;  % this is SPM12 output
 
     % calc 2nd-level estimation
     B1 = [];
@@ -71,8 +74,8 @@ function marmoAudGLMmixed
         end
 
         % GLM contrast image
-        [Ts, Tth, Vts, Vfs, Tmaxs, Tcnts, mrvs] = plotGlmContrastImage(contnames, contrasts, B, RSS, X2is, tRs, df, Pth, atlasV, tempV, ...
-            (atlasSize==1), ['GLM6marmoAudD ' '2nd-mix-Tukey' num2str(tuM) 'full'], 'none', rangePlus, rangeMinus, [], [], []);
+        [Ts, Tth, Vts, Vfs, Tmaxs, Tcnts, mrvs] = plotGlmContrastImage(contnames, contrasts, B, RSS, X2is, tRs, df, Pth, atlasV, backV, ...
+            (atlasSize==1), isRtoL, ['GLM6marmoAudD ' '2nd-mix-Tukey' num2str(tuM) 'full'], 'none', rangePlus, rangeMinus, [], [], []);
 
         % save T-value NIfTI volume
         saveContrastNii(tempNii,contnames,Vts,path,[cubename prefix 'D_2nd-mix-Tukey' num2str(tuM) 'th' 'full']);

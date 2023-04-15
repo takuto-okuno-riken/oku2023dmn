@@ -16,6 +16,7 @@
 %  maskV        3D mask volume
 %  backV        3D background volume 
 %  isFullVoxel  full voxel atlas or not
+%  isRtoL       X axis is right to left (default: true)
 %  sessionName  session name for title (optional)
 %  corrMeth     family-wise error rate (FWER) correction method ('none','bonf','sidak','holm-bonf','holm-sidak')
 %  rangePlus    plus T-value range ([min max]) (optional)
@@ -24,14 +25,15 @@
 %  zidx         show z-index slices (default: [])
 %  flatXY       show functional flat map (default: [])
 
-function [Ts, Tth, Vts, Vfs, Tmaxs, Tcnts, mrvs] = plotGlmContrastImage(contnames, Cs, B, RSS, X2is, tRs, df, Pth, maskV, backV, isFullVoxel, sessionName, corrMeth, rangePlus, rangeMinus, cmap, zidx, flatXY)
-    if nargin < 18, flatXY = []; end
-    if nargin < 17, zidx = []; end
-    if nargin < 16, cmap = []; end
-    if nargin < 15, rangeMinus = []; end
-    if nargin < 14, rangePlus = []; end
-    if nargin < 13, corrMeth = 'none'; end
-    if nargin < 12, sessionName = ''; end
+function [Ts, Tth, Vts, Vfs, Tmaxs, Tcnts, mrvs] = plotGlmContrastImage(contnames, Cs, B, RSS, X2is, tRs, df, Pth, maskV, backV, isFullVoxel, isRtoL, sessionName, corrMeth, rangePlus, rangeMinus, cmap, zidx, flatXY)
+    if nargin < 19, flatXY = []; end
+    if nargin < 18, zidx = []; end
+    if nargin < 17, cmap = []; end
+    if nargin < 16, rangeMinus = []; end
+    if nargin < 15, rangePlus = []; end
+    if nargin < 14, corrMeth = 'none'; end
+    if nargin < 13, sessionName = ''; end
+    if nargin < 12, isRtoL = true; end
 
     if isempty(rangePlus), rangePlus = [nan nan]; end
     if isempty(rangeMinus), rangeMinus = [nan nan]; end
@@ -119,16 +121,16 @@ function [Ts, Tth, Vts, Vfs, Tmaxs, Tcnts, mrvs] = plotGlmContrastImage(contname
         end
 
         % show figure
-        figure; plotNifti3DAxes(V2p,'max',rangePlus,cmap,backV);
+        figure; plotNifti3DAxes(V2p,'max',rangePlus,cmap,backV,gray,isRtoL);
         sgtitle(['GLM contrast (plus) of ' sessionName ' : ' contnames{j}],'Color','white');
-        figure; plotNifti3DAxes(V2m,'max',rangeMinus,cmap,backV);
+        figure; plotNifti3DAxes(V2m,'max',rangeMinus,cmap,backV,gray,isRtoL);
         sgtitle(['GLM contrast (minus) of ' sessionName ' : ' contnames{j}],'Color','white');
 
         if ~isempty(zidx)
-            figure; plotNifti3DZSlice(Vp,zidx,rangePlus,cmap,backV,gray,true,0.15);
+            figure; plotNifti3DZSlice(Vp,zidx,rangePlus,cmap,backV,gray,isRtoL,0.15);
             sgtitle(['GLM contrast (plus) of ' sessionName ' : ' contnames{j}],'Color','white');
 
-            figure; plotNifti3DZSlice(Vm,zidx,rangeMinus,cmap,backV,gray,true,0.15);
+            figure; plotNifti3DZSlice(Vm,zidx,rangeMinus,cmap,backV,gray,isRtoL,0.15);
             sgtitle(['GLM contrast (minus) of ' sessionName ' : ' contnames{j}],'Color','white');
         end
 

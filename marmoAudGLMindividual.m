@@ -42,9 +42,9 @@ function marmoAudGLMindividual
 %    figure; imagesc([Xorg ones(size(Xorg,1),1)]); colorbar;
 
     % load background nii
-    tempNii = 'data\sp2_avg_mri_exvivo_t2wi_v1.0.0Audio.nii.gz';
-    tempinfo = niftiinfo(tempNii);
-    tempV = niftiread(tempinfo);
+    backNii = 'data\sp2_avg_mri_exvivo_t2wi_v1.0.0Audio.nii.gz';
+    backinfo = niftiinfo(backNii);
+    backV = niftiread(backinfo);
 
     % generate atlas of cube clusters
     cubename = ['marmoAuCube' num2str(atlasSize)'];
@@ -61,7 +61,7 @@ function marmoAudGLMindividual
     wminfo = niftiinfo(wmF);
     wmV = niftiread(wminfo);
     wmV = single(wmV) / 255; % to [0 1] range
-    gsV = tempV;
+    gsV = backV;
     gsV(gsV>=1) = 1;
     gsV(gsV<1) = 0;
 
@@ -121,7 +121,7 @@ function marmoAudGLMindividual
         X = [X Xn]; % Nuisance should be raw
 
         % check Tukey range
-        checkTukeyRange(Z, X, path, cubename, atlasSize, prefix, atlasV, tempV, sbjs{i});
+        checkTukeyRange(Z, X, path, cubename, atlasSize, prefix, atlasV, backV, sbjs{i});
     end
 end
 
@@ -133,6 +133,7 @@ function checkTukeyRange(Zall, Xall, path, cubename, atlasSize, prefix,  atlasV,
     Pth = 0.05; % pvalue threshold
 
     tuMrange = 8:8;
+    isRtoL = true;  % this is SPM12 output
 
     % ---------------------------------------------------------------------
     % AR estimation with Tukey-Taper of frequency domain
@@ -150,7 +151,7 @@ function checkTukeyRange(Zall, Xall, path, cubename, atlasSize, prefix,  atlasV,
         end
     
         % get contrast image
-        plotGlmContrastImage(contnames, contrasts, B2, RSS, X2is, tRs, df, Pth, atlasV, tempV, (atlasSize==1), ...
+        plotGlmContrastImage(contnames, contrasts, B2, RSS, X2is, tRs, df, Pth, atlasV, tempV, (atlasSize==1), isRtoL, ...
             ['GLM6 ' cubename prefix subject 'CTukey' num2str(tuM)]);
     end
 end
