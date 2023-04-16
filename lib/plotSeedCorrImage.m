@@ -12,6 +12,7 @@
 %  maskV        3D mask volume
 %  backV        3D background volume 
 %  isFullVoxel  full voxel atlas or not
+%  isRtoL       X axis is right to left (default: true)
 %  sessionName  session name for title (optional)
 %  corrMeth     family-wise error rate (FWER) correction method ('none','bonf','sidak','holm-bonf','holm-sidak')
 %  rangePlus    plus T-value range ([min max]) (optional)
@@ -20,14 +21,15 @@
 %  zidx         show z-index slices (default: [])
 %  flatXY       show functional flat map (default: [])
 
-function [CVsp, CVsm, CVtp, CVtm, Tmaxs, Tcnts, mrvs] = plotSeedCorrImage(tgNames, Tgs, df, T2, Pth, maskV, backV, isFullVoxel, sessionName, corrMeth, rangePlus, rangeMinus, cmap, zidx, flatXY)
-    if nargin < 15, flatXY = []; end
-    if nargin < 14, zidx = []; end
-    if nargin < 13, cmap = hot; end
-    if nargin < 12, rangeMinus = [3 9]; end
-    if nargin < 11, rangePlus = [3 10]; end
-    if nargin < 10, corrMeth = 'none'; end
-    if nargin < 9, sessionName = ''; end
+function [CVsp, CVsm, CVtp, CVtm, Tmaxs, Tcnts, mrvs] = plotSeedCorrImage(tgNames, Tgs, df, T2, Pth, maskV, backV, isFullVoxel, isRtoL, sessionName, corrMeth, rangePlus, rangeMinus, cmap, zidx, flatXY)
+    if nargin < 16, flatXY = []; end
+    if nargin < 15, zidx = []; end
+    if nargin < 14, cmap = hot; end
+    if nargin < 13, rangeMinus = [3 9]; end
+    if nargin < 12, rangePlus = [3 10]; end
+    if nargin < 11, corrMeth = 'none'; end
+    if nargin < 10, sessionName = ''; end
+    if nargin < 9, isRtoL = true; end
 
     % T-value threshold (Bonferroni correction / Šidák correction)
     if strcmp(corrMeth,'bonf') || strcmp(corrMeth,'sidak')
@@ -109,16 +111,16 @@ function [CVsp, CVsm, CVtp, CVtm, Tmaxs, Tcnts, mrvs] = plotSeedCorrImage(tgName
         end
 
         % show figure
-        figure; plotNifti3DAxes(Vp,'max',rangePlus,cmap,backV);
+        figure; plotNifti3DAxes(Vp,'max',rangePlus,cmap,backV,gray,isRtoL);
         sgtitle(['From Seeds (plus) of ' sessionName ' : ' tgNames{j}],'Color','white');
-        figure; plotNifti3DAxes(Vm,'max',rangeMinus,cmap,backV);
+        figure; plotNifti3DAxes(Vm,'max',rangeMinus,cmap,backV,gray,isRtoL);
         sgtitle(['From Seeds (minus) of ' sessionName ' : ' tgNames{j}],'Color','white');
 
         if ~isempty(zidx)
-            figure; plotNifti3DZSlice(Vp,zidx,rangePlus,cmap,backV,gray,true,0.15);
+            figure; plotNifti3DZSlice(Vp,zidx,rangePlus,cmap,backV,gray,isRtoL,0.15);
             sgtitle(['From Seeds (plus) of ' sessionName ' : ' tgNames{j}],'Color','white');
 
-            figure; plotNifti3DZSlice(Vm,zidx,rangeMinus,cmap,backV,gray,true,0.15);
+            figure; plotNifti3DZSlice(Vm,zidx,rangeMinus,cmap,backV,gray,isRtoL,0.15);
             sgtitle(['From Seeds (minus) of ' sessionName ' : ' tgNames{j}],'Color','white');
         end
 
@@ -164,16 +166,16 @@ function [CVsp, CVsm, CVtp, CVtm, Tmaxs, Tcnts, mrvs] = plotSeedCorrImage(tgName
             end
     
             % show figure
-            figure; plotNifti3DAxes(Vp,'max',rangePlus,cmap,backV);
+            figure; plotNifti3DAxes(Vp,'max',rangePlus,cmap,backV,gray,isRtoL);
             sgtitle(['To Seeds (plus) of ' sessionName ' : ' tgNames{j}],'Color','white');
-            figure; plotNifti3DAxes(Vm,'max',rangeMinus,cmap,backV);
+            figure; plotNifti3DAxes(Vm,'max',rangeMinus,cmap,backV,gray,isRtoL);
             sgtitle(['To Seeds (minus) of ' sessionName ' : ' tgNames{j}],'Color','white');
     
             if ~isempty(zidx)
-                figure; plotNifti3DZSlice(Vp,zidx,rangePlus,cmap,backV,gray,true,0.15);
+                figure; plotNifti3DZSlice(Vp,zidx,rangePlus,cmap,backV,gray,isRtoL,0.15);
                 sgtitle(['To Seeds (plus) of ' sessionName ' : ' tgNames{j}],'Color','white');
     
-                figure; plotNifti3DZSlice(Vm,zidx,rangeMinus,cmap,backV,gray,true,0.15);
+                figure; plotNifti3DZSlice(Vm,zidx,rangeMinus,cmap,backV,gray,isRtoL,0.15);
                 sgtitle(['To Seeds (minus) of ' sessionName ' : ' tgNames{j}],'Color','white');
             end
 

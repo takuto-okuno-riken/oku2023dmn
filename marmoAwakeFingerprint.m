@@ -41,6 +41,7 @@ function checkSeedFingerprint(atlasSize, compName, compNum, stat, compnames, com
         contrasts{i}(compids(i)) = 1;
     end
     Pth = 0.05;
+    isRtoL = true;  % this is SPM12 output
 
     zallmat = [path sessionName '.mat'];
     if exist(zallmat,'file')
@@ -58,7 +59,7 @@ function checkSeedFingerprint(atlasSize, compName, compNum, stat, compnames, com
     figure; histogram(T3,'EdgeColor','none'); title([sessionName ' T-values']);
     
     % get contrast image
-    [Vsp, ~, ~, ~, tm, tc, mr] = plotSeedCorrImage(compnames, contrasts, df, T2, Pth, subV, tempV, (atlasSize==1), [sessionName 'mix-Corr'], 'none', [NaN 20], [NaN 20], cmap, [9:31]);
+    [Vsp, ~, ~, ~, tm, tc, mr] = plotSeedCorrImage(compnames, contrasts, df, T2, Pth, subV, tempV, (atlasSize==1), isRtoL, [sessionName 'mix-Corr'], 'none', [NaN 20], [NaN 20], cmap, [9:31]);
 
     % save T-value NIfTI volume
 %    saveSeedGlmContrastNii(tempinfo, contnames, Vsp, [path sessionName 'mixCorr']);
