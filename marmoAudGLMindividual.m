@@ -129,7 +129,7 @@ end
 function checkTukeyRange(Zall, Xall, path, cubename, atlasSize, prefix,  atlasV, tempV, subject)
     % contrast image params
     contnames = {'audio'};
-    contrasts = {[1 0 0 0 0 0]'};
+    contrasts = {[-1 0 0 0 0 0]'};
     Pth = 0.05; % pvalue threshold
 
     tuMrange = 8:8;

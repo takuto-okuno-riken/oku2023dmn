@@ -5,8 +5,8 @@ function marmoAwakeFingerprint
     compName = 'Aw';
     compNum = 30;
     stat = 'Awake';
-    compnames = {'FPN','DMN'};
-    compids = [8, 10];
+    compnames = {'FPN','DMN','SN','PMN','ORN','LIM','pVIS','hVIS'};
+    compids = [8, 10, 19, 22, 12, 4, 5, 20];
 
     % atlas of cube clusters
     checkSeedFingerprint(1, compName, compNum, stat, compnames, compids);
