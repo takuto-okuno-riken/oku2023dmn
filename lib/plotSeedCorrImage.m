@@ -1,14 +1,14 @@
 %%
 % Plot multi seed analysis results
 % returns
-%   cells of thresholded T-value 3D voxels (seeds are source, plus side) (CVsp), cells of thresholded T-value 3D voxels (seeds are source, minus side) (CVsm)
-%   cells of thresholded T-value 3D voxels (seeds are target, plus side) (CVtp), cells of thresholded T-value 3D voxels (seeds are target, minus side) (CVtm)
+%   cells of thresholded T or Z value 3D voxels (seeds are source, plus side) (CVsp), cells of thresholded T or Z value 3D voxels (seeds are source, minus side) (CVsm)
+%   cells of thresholded T or Z value 3D voxels (seeds are target, plus side) (CVtp), cells of thresholded T or Z value 3D voxels (seeds are target, minus side) (CVtm)
 % input:
 %  tgNames      cells of target region names
 %  Tgs          cells of target region vectors (node x 1)
-%  T2           T-value matrix (node x node)
+%  T2           T-value or Z-value matrix (node x node)
 %  df           degree of freedom (df)
-%  Pth          P-value threshold for T-value matrix
+%  Pth          P-value threshold for T or Z value matrix
 %  maskV        3D mask volume
 %  backV        3D background volume 
 %  isFullVoxel  full voxel atlas or not
@@ -31,28 +31,7 @@ function [CVsp, CVsm, CVtp, CVtm, Tmaxs, Tcnts, mrvs] = plotSeedCorrImage(tgName
     if nargin < 10, sessionName = ''; end
     if nargin < 9, isRtoL = true; end
 
-    % T-value threshold (Bonferroni correction / Šidák correction)
-    if strcmp(corrMeth,'bonf') || strcmp(corrMeth,'sidak')
-        % check symmetry or not
-        if isequal(T2,T2')
-            m = (size(T2,1) * size(T2,1)-1)/2 + size(T2,1); % half matrix T-test
-        elseif size(T2,1) == size(T2,2)
-            m = (size(T2,1) * size(T2,1)); % full matrix T-test
-        else
-            m = size(T2,1); % basically, column ROIs are independent.
-        end
-        if strcmp(corrMeth,'bonf')
-            BPth = Pth / m;
-        else
-            % Šidák correction - almost same as bonferroni
-            BPth = 1 - power(1 - Pth, 1/m);
-        end
-        Tth = abs(tinv(BPth,df));
-        disp(['P-value=' num2str(Pth) ' (' corrMeth ' corrected=' num2str(BPth) '), T-value=' num2str(Tth)])
-    elseif ~strcmp(corrMeth,'holm-bonf') && ~strcmp(corrMeth,'holm-sidak')
-        Tth = abs(tinv(Pth,df));
-        disp(['P-value=' num2str(Pth) ', T-value=' num2str(Tth)])
-    end
+    if isinf(df), Tstr='Z'; else Tstr='T'; end % T-value or Z-value
 
     Tmaxs = [];
     Tcnts = [];
@@ -72,21 +51,61 @@ function [CVsp, CVsm, CVtp, CVtm, Tmaxs, Tcnts, mrvs] = plotSeedCorrImage(tgName
         T2p = max(T2c,[],2);
         T2m = max(-T2c,[],2);
 
+        % T-value threshold (Bonferroni correction / Šidák correction)
+        if strcmp(corrMeth,'bonf') || strcmp(corrMeth,'sidak')
+            % only masked ROI is used
+            if size(T2,1) == size(T2,2)
+                m = size(T2,1) * sum(tg~=0);
+            else
+                m = size(T2,1); % basically, column ROIs are independent.
+            end
+            if strcmp(corrMeth,'bonf')
+                BPth = Pth / m;
+            else
+                % Šidák correction - almost same as bonferroni
+                BPth = 1 - power(1 - Pth, 1/m);
+            end
+            if isinf(df)
+                Tth = abs(norminv(BPth));
+            else
+                Tth = abs(tinv(BPth,df));
+            end
+            disp(['P-value=' num2str(Pth) ' (' corrMeth ' corrected=' num2str(BPth) '), ' Tstr '-value=' num2str(Tth)])
         % Holm–Bonferroni method
-        if strcmp(corrMeth,'holm-bonf') || strcmp(corrMeth,'holm-sidak')
-            T2s = sort(T2c(:),'descend');
+        elseif strcmp(corrMeth,'holm-bonf') || strcmp(corrMeth,'holm-sidak')
+            % check symmetry or not
+            tg2 = tg;
+            tg2(tg2==0) = nan;
+            if size(T2,2) == size(tg,1)
+                T2c2 = T2 .* tg2';
+            else
+                T2c2 = T2 .* [tg2; 0]';
+            end
+            T2c2(isnan(T2c2)) = []; % remove NaN
+            T2s = sort(T2c2(:),'descend'); % full matrix T-test
             for k=1:length(T2s)
                 if strcmp(corrMeth,'holm-bonf')
-                    BPth = Pth / (size(T2,1) + 1 - k);
+                    BPth = Pth / (length(T2s) + 1 - k);
                 else
-                    BPth = 1 - power(1 - Pth, 1/(size(T2,1) + 1 - k));
+                    BPth = 1 - power(1 - Pth, 1/(length(T2s) + 1 - k));
                 end
-                Tth = abs(tinv(BPth,df));
+                if isinf(df)
+                    Tth = abs(norminv(BPth));
+                else
+                    Tth = abs(tinv(BPth,df));
+                end
                 if T2s(k) <= Tth
                     break;
                 end
             end
-            disp(['P-value=' num2str(Pth) ' (' corrMeth ' corrected=' num2str(BPth) '), T-value=' num2str(Tth)])
+            disp(['P-value=' num2str(Pth) ' (' corrMeth ' corrected=' num2str(BPth) '), ' Tstr '-value=' num2str(Tth)])
+        else
+            if isinf(df)
+                Tth = abs(norminv(Pth));
+            else
+                Tth = abs(tinv(Pth,df));
+            end
+            disp(['P-value=' num2str(Pth) ', ' Tstr '-value=' num2str(Tth)])
         end
         % set auto range
         if isnan(rangePlus(1))
@@ -136,7 +155,7 @@ function [CVsp, CVsm, CVtp, CVtm, Tmaxs, Tcnts, mrvs] = plotSeedCorrImage(tgName
         tmax = max(Vp(:));
         tcnt = length(find(Vp>=Tth));
         mrv = NaN;
-        disp(['Tmax (source) of ' sessionName ' : ' tgNames{j} ' tmax=' num2str(tmax) ', tcnt=' num2str(tcnt) ', mrv=' num2str(mrv)])
+        disp([Tstr 'max (source) of ' sessionName ' : ' tgNames{j} ' tmax=' num2str(tmax) ', tcnt=' num2str(tcnt) ', mrv=' num2str(mrv)])
 
         Vp(Vp > rangePlus(2)) = rangePlus(2); Vp = Vp - rangePlus(1); Vp(Vp<0) = 0;
         Vm(Vm > rangeMinus(2)) = rangeMinus(2); Vm = Vm - rangeMinus(1); Vm(Vm<0) = 0;
@@ -191,7 +210,7 @@ function [CVsp, CVsm, CVtp, CVtm, Tmaxs, Tcnts, mrvs] = plotSeedCorrImage(tgName
             tmax = max(Vp(:));
             tcnt = length(find(Vp>=Tth));
             mrv = NaN;
-            disp(['Tmax (target) of ' sessionName ' : ' tgNames{j} ' tmax=' num2str(tmax) ', tcnt=' num2str(tcnt) ', mrv=' num2str(mrv)])
+            disp([Tstr 'max (target) of ' sessionName ' : ' tgNames{j} ' tmax=' num2str(tmax) ', tcnt=' num2str(tcnt) ', mrv=' num2str(mrv)])
 
             Vp(Vp > rangePlus(2)) = rangePlus(2); Vp = Vp - rangePlus(1); Vp(Vp<0) = 0;
             Vm(Vm > rangeMinus(2)) = rangeMinus(2); Vm = Vm - rangeMinus(1); Vm(Vm<0) = 0;
