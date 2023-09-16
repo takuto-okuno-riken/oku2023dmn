@@ -1,50 +1,62 @@
 %%
 % Plot GLM Contrast Image with prewhitening.
-% based on K.J.Friston et al. (2000), M.W.Woolrich et al. (2001), K.J.Worsley (2001)
-% returns cells of T-value matrix (Ts), threshold value for T-value (Tth),
+% based on K.J.Friston et al. (2000), M.W.Woolrich et al. (2001),
+% K.J.Worsley (2001), A.Kawaguchi (2017). 
+% returns threshold value for T-value (Tth),
 %   cells of range thresholded T-value 3D voxels (Vts), cells of full T-value 3D voxels (Vfs)
-% returns 
 % input:
 %  contnames    cells of contrast names
-%  Cs           cells of contrast vectors (contrasts (predictor size) x 1)
-%  B            predictor variables (node x predictor variables)
-%  RSS          Residual Sum of Squares (node x 1)
-%  X2is         Vector or single value of inv(X' * X) for contrast
-%  tRs          Vector or single value of trace(R) for contrast
-%  df           degree of freedom (df)
-%  Pth          P-value threshold for T-value matrix
-%  maskV        3D mask volume
-%  backV        3D background volume 
-%  isFullVoxel  full voxel atlas or not
+%  Ts           cells of T-value matrix
+%  thParam      threshold params for T-value matrix {df, Pth, corrMeth}
+%            df:       degree of freedom
+%            Pth:      P-value threshold for T-value matrix
+%            corrMeth: family-wise error rate (FWER) correction method for P-value ([default] 'none','bonf','sidak','holm-bonf','holm-sidak')
+%  clParam      clustering threshold params {extK, rFWHM, cdt, conn, corrMeth}
+%            extK:     extent threshold (voxels)
+%            rFWHM:    resel FWHM (should be estimated by estimateSmoothFWHM.m)
+%            cdt:      cluster defining threshold (default: 3.3)
+%            conn:     adjacent voxel connection number (6, [default] 18, 26)
+%            corrMeth: family-wise error rate (FWER) correction method for clustering ('bonf', 'sidak', [default] 'poisson')
+%  atlasV       3D atlas volume (or {0, 1} mask volume)
+%  isMask       if atlasV is mask volume, then true. otherwise, atlasV has regional info, and also used as mask.
 %  isRtoL       X axis is right to left (default: true)
+%  backV        3D background volume for plotNifti3DAxes (default: [])
 %  sessionName  session name for title (optional)
-%  corrMeth     family-wise error rate (FWER) correction method ('none','bonf','sidak','holm-bonf','holm-sidak')
 %  rangePlus    plus T-value range ([min max]) (optional)
 %  rangeMinus   minus T-value range ([min max]) (optional)
 %  cmap         color map for 3D plot (default: turbo)
 %  zidx         show z-index slices (default: [])
 %  flatXY       show functional flat map (default: [])
 
-function [Ts, Tth, Vts, Vfs, Tmaxs, Tcnts, mrvs] = plotGlmContrastImage(contnames, Cs, B, RSS, X2is, tRs, df, Pth, maskV, backV, isFullVoxel, isRtoL, sessionName, corrMeth, rangePlus, rangeMinus, cmap, zidx, flatXY)
-    if nargin < 19, flatXY = []; end
-    if nargin < 18, zidx = []; end
-    if nargin < 17, cmap = []; end
-    if nargin < 16, rangeMinus = []; end
-    if nargin < 15, rangePlus = []; end
-    if nargin < 14, corrMeth = 'none'; end
-    if nargin < 13, sessionName = ''; end
-    if nargin < 12, isRtoL = true; end
+function [Tth, Vts, Vfs, Tmaxs, Tcnts] = plotGlmContrastImage(contnames, Ts, thParam, clParam, atlasV, isMask, isRtoL, backV, sessionName, rangePlus, rangeMinus, cmap, zidx, flatXY)
+    if nargin < 14, flatXY = []; end
+    if nargin < 13, zidx = []; end
+    if nargin < 12, cmap = []; end
+    if nargin < 11, rangeMinus = []; end
+    if nargin < 10, rangePlus = []; end
+    if nargin < 9, sessionName = ''; end
+    if nargin < 8, backV = []; end
+    if nargin < 7, isRtoL = true; end
+
+    % init threshold parameters
+    df = thParam{1}; Pth = thParam{2}; corrMeth = 'none';
+    if length(thParam)>=3, corrMeth = thParam{3}; end
+    extK = 0; rFW = []; conn = 18; cdt = 4; clCorrMeth = 'poisson';
+    if length(clParam)>=1, extK = clParam{1}; end
+    if length(clParam)>=2, rFW = clParam{2}; end
+    if length(clParam)>=3, cdt = clParam{3}; end
+    if length(clParam)>=4, conn = clParam{4}; end
+    if length(clParam)>=5, clCorrMeth = clParam{5}; end
+    resel = prod(rFW);
 
     if isempty(rangePlus), rangePlus = [nan nan]; end
     if isempty(rangeMinus), rangeMinus = [nan nan]; end
     if isempty(cmap), cmap = turbo; end
-
-    % GLM contrast image
-    Ts = calcGlmContrastImage(Cs, B, RSS, X2is, tRs);
+    orgRp = rangePlus; orgRm = rangeMinus;
 
     % T-value threshold (Bonferroni correction / Šidák correction)
     if strcmp(corrMeth,'bonf') || strcmp(corrMeth,'sidak')
-        m = size(RSS,1);
+        m = size(Ts{1},1);
         if strcmp(corrMeth,'bonf')
             BPth = Pth / m;
         else
@@ -52,15 +64,14 @@ function [Ts, Tth, Vts, Vfs, Tmaxs, Tcnts, mrvs] = plotGlmContrastImage(contname
             BPth = 1 - power(1 - Pth, 1/m);
         end
         Tth = abs(tinv(BPth,df));
-        disp(['P-value=' num2str(Pth) ' (' corrMeth ' corrected=' num2str(BPth) '), T-value=' num2str(Tth)])
+        disp(['Height threshold: P-value=' num2str(Pth) ' (' corrMeth ' corrected=' num2str(BPth) '), T-value=' num2str(Tth)])
     elseif ~strcmp(corrMeth,'holm-bonf') && ~strcmp(corrMeth,'holm-sidak')
         Tth = abs(tinv(Pth,df));
-        disp(['P-value=' num2str(Pth) ', T-value=' num2str(Tth)])
+        disp(['Height threshold: P-value=' num2str(Pth) ', T-value=' num2str(Tth)])
     end
 
     Tmaxs = [];
     Tcnts = [];
-    mrvs = [];
 
     for j=1:length(contnames)
         T2 = Ts{j};
@@ -74,18 +85,18 @@ function [Ts, Tth, Vts, Vfs, Tmaxs, Tcnts, mrvs] = plotGlmContrastImage(contname
 %        T2 = Z;
 %        T2(T2>-Tth & T2<Tth) = nan;
 
-        if isFullVoxel == 1
-            aIdx = find(maskV(:) > 0);
-            V2 = single(maskV);
+        if isMask == 1
+            aIdx = find(atlasV(:) > 0);
+            V2 = single(atlasV);
             V2(:) = nan;
             V2(aIdx) = T2;
         else
-            V2 = getNifti4DFromRoiTS(T2, maskV);
+            V2 = getNifti4DFromRoiTS(T2, atlasV);
         end
 
         % Holm–Bonferroni method
         if strcmp(corrMeth,'holm-bonf') || strcmp(corrMeth,'holm-sidak')
-            m = size(RSS,1);
+            m = size(T2,1);
             T2s = sort(T2(:),'descend');
             for k=1:length(T2s)
                 if strcmp(corrMeth,'holm-bonf')
@@ -98,24 +109,57 @@ function [Ts, Tth, Vts, Vfs, Tmaxs, Tcnts, mrvs] = plotGlmContrastImage(contname
                     break;
                 end
             end
-            disp(['P-value=' num2str(Pth) ' (' corrMeth ' corrected=' num2str(BPth) '), T-value=' num2str(Tth)])
+            disp(['Height threshold: P-value=' num2str(Pth) ' (' corrMeth ' corrected=' num2str(BPth) '), T-value=' num2str(Tth)])
         end
         V2p = V2; V2m = -V2;
-        V2p(V2p<Tth) = nan;   % thresholded T-value
-        V2m(V2m<Tth) = nan;   % thresholded T-value
+        V2p(V2p<Tth) = 0;   % thresholded T-value
+        V2m(V2m<Tth) = 0;   % thresholded T-value
+
+        % clustering threshold
+        if extK > 0
+            BW = V2p + V2m; BW(isnan(BW)) = 0;
+            filter = images.internal.getBinaryConnectivityMatrix(conn);
+            BWconv = ( convn(single(BW),filter,'same') >= cdt ) & logical(BW); % find clusters of voxels with more than CDT neighbors
+            L = bwlabeln(BWconv,conn);
+            b = 0.5334942;
+            clFull = max(L(:));
+            cl = {};
+            for k=1:clFull
+                idx = find(L==k);
+                s = length(idx);
+                if s <= extK, V2p(idx) = 0; V2m(idx) = 0; continue; end
+                cl{end+1} = s;
+            end
+            clExp = length(cl); %expected cluster number
+            p = exp(-b * power(extK/resel * cdt*(cdt*cdt-1),2/3)); % uncorrected
+            if strcmp(clCorrMeth,'poisson'), Pcr = min(1, 1-poisscdf(0,(clExp + eps)*p)); % Poisson clumping heuristic (used in spm_P_RF.m of SPM12)
+            elseif strcmp(clCorrMeth,'sidak'), Pcr = min(1, 1-(1-p)^clExp); % Šidák correction
+            else, Pcr = min(1, p * clExp); end % Bonferroni correction
+            disp(['Extent threshold: k=' num2str(extK) ' voxels, P-value=' num2str(p) ' (' num2str(Pcr) ')'])
+            disp(['Expected cluster list (num=' num2str(length(cl)) '), degree of freedom=' num2str(df) ', FWHM={' num2str(rFW(1)) ' ' num2str(rFW(2)) ' ' num2str(rFW(3)) '} voxels']);
+            for k=1:length(cl)
+                p = exp(-b * power(cl{k}/resel * cdt*(cdt*cdt-1),2/3)); % uncorrected
+                if strcmp(clCorrMeth,'poisson'), Pcr = min(1, 1-poisscdf(0,(clExp + eps)*p)); % Poisson clumping heuristic
+                elseif strcmp(clCorrMeth,'sidak'), Pcr = min(1, 1-(1-p)^clExp); % Šidák correction
+                else, Pcr = min(1, p * clExp); end % Bonferroni correction
+                disp([num2str(k) ') k=' num2str(cl{k}) ' voxels, P uncorr=' num2str(p) ', P fwe-corr=' num2str(Pcr)]);
+            end
+        end
+        V2p(V2p==0) = nan; % set nan to visibility
+        V2m(V2m==0) = nan; % set nan to visibility
 
         % set auto range
-        if isnan(rangePlus(1))
+        if isnan(orgRp(1))
             rangePlus(1) = Tth;
         end
-        if isnan(rangePlus(2))
+        if isnan(orgRp(2))
             m = max(V2p(~isinf(V2p)));
             if m>Tth, rangePlus(2) = m; else, rangePlus(2) = Tth + 1; end
         end
-        if isnan(rangeMinus(1))
+        if isnan(orgRm(1))
             rangeMinus(1) = Tth;
         end
-        if isnan(rangeMinus(2))
+        if isnan(orgRm(2))
             m = max(V2m(~isinf(V2m)));
             if m>Tth, rangeMinus(2) = m; else, rangeMinus(2) = Tth + 1; end
         end
@@ -135,25 +179,22 @@ function [Ts, Tth, Vts, Vfs, Tmaxs, Tcnts, mrvs] = plotGlmContrastImage(contname
         end
 
         if ~isempty(flatXY)
-            T2p = T2; T2m = -T2;
-            T2p(T2p<Tth) = nan;   % thresholded T-value
-            T2m(T2m<Tth) = nan;   % thresholded T-value
-            figure; plotNifti3Dflatmap(T2p, maskV, isFullVoxel, flatXY, 10, rangePlus, cmap, [0.1 0.1 0.1], [0 0 0]);
+            figure; plotNifti3Dflatmap(T2p, atlasV, isMask, flatXY, 10, rangePlus, cmap, [0.1 0.1 0.1], [0 0 0]);
             title(['GLM contrast (plus) of ' sessionName ' : ' contnames{j}]);
 
-            figure; plotNifti3Dflatmap(T2m, maskV, isFullVoxel, flatXY, 10, rangeMinus, cmap, [0.1 0.1 0.1], [0 0 0]);
+            figure; plotNifti3Dflatmap(T2m, atlasV, isMask, flatXY, 10, rangeMinus, cmap, [0.1 0.1 0.1], [0 0 0]);
             title(['GLM contrast (minus) of ' sessionName ' : ' contnames{j}]);
         end
 
         % show Tmax
         tmax = max(V2(:));
         tcnt = length(find(V2>=Tth));
-        mrv = nanmean(RSS);
-        disp(['Tmax of ' sessionName ' : ' contnames{j} ' tmax=' num2str(tmax) ', tcnt=' num2str(tcnt) ', mrv=' num2str(mrv)])
+        disp(['Tmax of ' sessionName ' : ' contnames{j} ' tmax=' num2str(tmax) ', tcnt=' num2str(tcnt)])
 
         % output 
-        V2(isnan(V2)) = 0;
-        V2t = V2;
+        V2p(isnan(V2p)) = 0;
+        V2m(isnan(V2m)) = 0;
+        V2t = V2p - V2m;
         V2t(V2t>rangePlus(2)) = rangePlus(2);
         V2t(V2t<-rangeMinus(2)) = -rangeMinus(2);
         V2t(-rangeMinus(1)<V2t & V2t < rangePlus(1)) = 0;
@@ -161,6 +202,5 @@ function [Ts, Tth, Vts, Vfs, Tmaxs, Tcnts, mrvs] = plotGlmContrastImage(contname
         Vfs{j} = V2;
         Tmaxs(j) = tmax;
         Tcnts(j) = tcnt;
-        mrvs(j) = mrv;
     end
 end

@@ -41,6 +41,7 @@ function marmoAudGLMmixed
     % calc 2nd-level estimation
     B1 = [];
     X2 = [];
+    FWHMs = [];
     for i=1:length(sbjs)
         betaBmat = [path cubename prefix sbjs{i} 'C-Tukey' num2str(tuM) '.mat'];
         if ~exist(betaBmat,'file')
@@ -53,12 +54,13 @@ function marmoAudGLMmixed
         % 2nd-level Y vector
         B2 = f.B2(:,[1,6]); % include design and intercept (we need more than 8 length for tukey taper)
         B1 = [B1; B2'];
+        FWHMs = [FWHMs; f.FWHM];
 
         % 2nd-level design matrix
         X2 = [X2; eye(size(B2,2))];
     end
     B1(isnan(B1)) = 0; % there might be nan
-    if isempty(B1), return; end
+    FWHMs = mean(FWHMs,1); % let's take the mean of FWHM.
 
     for tuM = 8:8
         betaBmat = [path cubename prefix 'D-Tukey' num2str(tuM) 'full.mat'];
@@ -67,15 +69,22 @@ function marmoAudGLMmixed
             load(betaBmat);
         else
             % calc 2nd-level estimation
-            [B, RSS, df, X2is, tRs] = calcGlmTukey(B1, X2, tuM);
+            [B, RSS, df, X2is, tRs, R] = calcGlmTukey(B1, X2, tuM);
+
+            [recel, FWHM] = estimateSmoothFWHM(R, RSS, df, atlasV);
 
             % output beta matrix
-            save(betaBmat,'B','RSS','X2is','tRs','df','-v7.3');
+            save(betaBmat,'B','RSS','X2is','tRs','recel','FWHM','df','-v7.3');
         end
 
+        % GLM contrast images
+        Ts = calcGlmContrastImage(contrasts, B, RSS, X2is, tRs);
+
         % GLM contrast image
-        [Ts, Tth, Vts, Vfs, Tmaxs, Tcnts, mrvs] = plotGlmContrastImage(contnames, contrasts, B, RSS, X2is, tRs, df, Pth, atlasV, backV, ...
-            (atlasSize==1), isRtoL, ['GLM6marmoAudD ' '2nd-mix-Tukey' num2str(tuM) 'full'], 'none', rangePlus, rangeMinus, [], [], []);
+        thParam = {df, Pth};
+        clParam = {69, FWHMs}; % clustering parameter for GLM contrast
+        [Tth, Vts, Vfs, Tmaxs, Tcnts] = plotGlmContrastImage(contnames, Ts, thParam, clParam, atlasV, (atlasSize==1), isRtoL, backV, ...
+            ['GLM6marmoAudD ' '2nd-mix-Tukey' num2str(tuM) 'full'], rangePlus, rangeMinus, [], [], []);
 
         % save T-value NIfTI volume
         saveContrastNii(tempNii,contnames,Vts,path,[cubename prefix 'D_2nd-mix-Tukey' num2str(tuM) 'th' 'full']);

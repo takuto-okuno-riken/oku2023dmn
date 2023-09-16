@@ -59,7 +59,8 @@ function checkSeedFingerprint(atlasSize, compName, compNum, stat, compnames, com
     figure; histogram(T3,'EdgeColor','none'); title([sessionName ' T-values']);
     
     % get contrast image
-    [Vsp, ~, ~, ~, tm, tc, mr] = plotSeedCorrImage(compnames, contrasts, df, T2, Pth, subV, tempV, (atlasSize==1), isRtoL, [sessionName 'mix-Corr'], 'none', [NaN 20], [NaN 20], cmap, [9:31]);
+    thParam = {df, Pth, 'none'};
+    [Vsp, ~, ~, ~, tm, tc] = plotSeedCorrImage(compnames, contrasts, T2, thParam, subV, (atlasSize==1), isRtoL, tempV, [sessionName 'mix-Corr'], [NaN 20], [NaN 20], cmap, 'max', [9:31]);
 
     % save T-value NIfTI volume
 %    saveSeedGlmContrastNii(tempinfo, contnames, Vsp, [path sessionName 'mixCorr']);

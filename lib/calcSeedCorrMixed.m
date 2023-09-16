@@ -1,13 +1,14 @@
 %%
 % Calculate 2nd-Level Mixed-Effects Seed correlation analysis
 % if CS is not suppplied, CY correlation matrix is calculated.
+% (one sample t-test/Wilcoxon version)
 % input:
 %  CY          cells of ROI or voxel time series (time series x node) or filename or matfile object
 %  CS          seed cells of ROI or voxel time series (time series x node)(optional)
 %  cachePath   path for cache files (optional)
 %  cacheID     cache identifier (optional)
 
-function [B2, RSS2, T2, df] = calcSeedCorrMixed(CY, CS, cachePath, cacheID)
+function [B2, RSS2, T2, df, Z2] = calcSeedCorrMixed(CY, CS, cachePath, cacheID)
     if nargin < 4, cacheID = []; end
     if nargin < 3, cachePath = []; end
     if nargin < 2, CS = []; end
@@ -30,8 +31,8 @@ function [B2, RSS2, T2, df] = calcSeedCorrMixed(CY, CS, cachePath, cacheID)
     n = length(CY); % subject length
     df = n - 1;
     CR = cell(n,1);
-    for j=1:n
-%    parfor j=1:n
+%    for j=1:n
+    parfor j=1:n
         tt = tic;
         if ~isempty(cachePath)
             gs = loadSeedCorrCache(cachePath,cacheID,j);
@@ -66,6 +67,23 @@ function [B2, RSS2, T2, df] = calcSeedCorrMixed(CY, CS, cachePath, cacheID)
         end
         t = toc(tt);
         disp(['process session(' num2str(j) ') t=' num2str(t)]);
+    end
+
+    % calc 2nd-level (group) estimation
+    % Wilcoxon Rank Sum Test
+    if nargout >= 5
+        R3 = zeros(n,length(CR{1}.R2),'single');
+        for j=1:n
+            R3(j,:) = CR{j}.R2;
+        end
+        Z2 = calcSignrankZ(R3);
+        if isempty(CS)
+            Z3 = zeros(v,v,'single');
+            Z3(idx) = Z2;
+            Z2 = Z3' + triu(Z3,1);
+        else
+            Z2 = reshape(Z2,size(CY{1}.X,2),size(CS{1}.X,2));
+        end
     end
 
     % calc 2nd-level estimation

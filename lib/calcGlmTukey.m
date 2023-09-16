@@ -10,13 +10,13 @@
 %   r ~ N(0, s^2 * SVS') therefore N(0, s^2 * I)
 % This function is used for single session.
 % returns predictor variables (B), Residual Sum of Squares (RSS), degree of freedom (df),
-%   inv(X' * X) for contrast (X2is), trace(R) for contrast (tRs)
+%   inv(X' * X) for contrast (X2is), trace(R) for contrast (tRs), full of Residuals (R)
 % input:
 %  Y         ROI or voxel time series (time series x node)
 %  X         design matrix (time series x predictor variables)
 %  tuM       Tukey-Taper window size (default: sqrt(time series length))
 
-function [B, RSS, df, X2is, tRs] = calcGlmTukey(Y, X, tuM)
+function [B, RSS, df, X2is, tRs, R] = calcGlmTukey(Y, X, tuM)
     if nargin < 3, tuM = floor(sqrt(size(X, 1))); end
 
     disp(['process GLM with Tukey-Taper(' num2str(tuM) ') estimation ...']);
@@ -28,6 +28,8 @@ function [B, RSS, df, X2is, tRs] = calcGlmTukey(Y, X, tuM)
     tRs = nan(roiNum,1,'single');
     B = nan(roiNum,xsz,'single');
     RSS = nan(roiNum,1,'single');
+    CR = cell(roiNum,1);
+    isOutR = (nargout > 5);
     df = size(X,1) - size(X,2);
 
     % make Tukey window
@@ -45,6 +47,7 @@ function [B, RSS, df, X2is, tRs] = calcGlmTukey(Y, X, tuM)
         if sum(r==0) == size(r, 1)
             B(i,:) = 0;
             RSS(i) = 0;
+            if isOutR, CR{i} = r; end
             continue;
         end
 
@@ -85,6 +88,7 @@ function [B, RSS, df, X2is, tRs] = calcGlmTukey(Y, X, tuM)
 %}
         B(i,:) = b;
         RSS(i) = r' * r;
+        if isOutR, CR{i} = r; end
 %{
         C = xcov(r',tuM,'unbiased');
         Rxx = C(tuM+1:end) / var(r',1);
@@ -114,6 +118,12 @@ function [B, RSS, df, X2is, tRs] = calcGlmTukey(Y, X, tuM)
         tIR = size(Xb,1) - sum((Xb * Xt2i)' .* Xb','all');
         tR2s(i) = tIR;
 %}
+    end
+    if isOutR
+        R = nan(roiNum,size(Y,1),'single');
+        for i=1:roiNum
+            R(i,:) = CR{i};
+        end
     end
     t = toc(tc);
     disp(['done t=' num2str(t) 'sec'])

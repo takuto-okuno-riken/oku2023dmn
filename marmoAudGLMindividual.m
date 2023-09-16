@@ -113,7 +113,7 @@ function marmoAudGLMindividual
         Z = highpass(Z',hpfTh,1/TR);
         Z = Z';
         % get Nuisance time-series (CSF, WM, Global Signal, Global Mean)
-        Xn = getGlmNuisanceTimeSeries(V, csfV, wmV, gsV);
+        Xn = getNuisanceMeanTimeSeries(V, csfV, wmV, gsV);
         figure; imagesc([X Xn ones(size(X,1),1)], [-0.4, 1.2]); colorbar;
         % K*W*Y = K*W*B*X + K*W*e case. (SPM type. K.J.Friston, 2000)
         % actually, FLS (FEAT) do this as default option
@@ -129,8 +129,8 @@ end
 function checkTukeyRange(Zall, Xall, path, cubename, atlasSize, prefix,  atlasV, tempV, subject)
     % contrast image params
     contnames = {'audio'};
-    contrasts = {[-1 0 0 0 0 0]'};
-    Pth = 0.05; % pvalue threshold
+    contrasts = {[1 0 0 0 0 0]'};
+    Pth = 0.001; % pvalue threshold
 
     tuMrange = 8:8;
     isRtoL = true;  % this is SPM12 output
@@ -144,14 +144,22 @@ function checkTukeyRange(Zall, Xall, path, cubename, atlasSize, prefix,  atlasV,
             load(betaBmat);
         else
             Xt = [Xall, ones(size(Xall,1),1)];
-            [B2, RSS, df, X2is, tRs] = calcGlmTukey(Zall', Xt, tuM);
+            [B2, RSS, df, X2is, tRs, R] = calcGlmTukey(Zall', Xt, tuM);
+
+            [recel, FWHM] = estimateSmoothFWHM(R, RSS, df, atlasV);
 
             % output beta matrix
-            save(betaBmat,'B2','RSS','X2is','tRs','df','-v7.3');
+            save(betaBmat,'B2','RSS','X2is','tRs','recel','FWHM','df','-v7.3');
         end
     
-        % get contrast image
-        plotGlmContrastImage(contnames, contrasts, B2, RSS, X2is, tRs, df, Pth, atlasV, tempV, (atlasSize==1), isRtoL, ...
+        % GLM contrast images
+        Ts = calcGlmContrastImage(contrasts, B2, RSS, X2is, tRs);
+
+        % plot contrast image
+        thParam = {df, Pth};
+        clParam = {60, FWHM}; % clustering parameter for GLM contrast
+        plotGlmContrastImage(contnames, Ts, thParam, clParam, atlasV, (atlasSize==1), isRtoL, tempV, ...
             ['GLM6 ' cubename prefix subject 'CTukey' num2str(tuM)]);
     end
 end
+
