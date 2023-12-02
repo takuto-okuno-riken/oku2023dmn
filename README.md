@@ -2,7 +2,10 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7827225.svg)](https://doi.org/10.5281/zenodo.7827225)
 
 # oku2023dmn
-Code for a manuscipt of the default mode network in common marmoset (2023)
+Code for a manuscipt of the default mode network in common marmoset.<br>
+Currently, preprint is available on bioRxiv:<br>
+Takuto Okuno, Noritaka Ichinohe, Alexander Woodward (2023)
+["A reappraisal of the default mode and frontoparietal networks in the common marmoset brain"](https://www.biorxiv.org/content/10.1101/2023.11.28.569119v1)
 
 ## Requirements: Software
 * MATLAB R2019b or later
