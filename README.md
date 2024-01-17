@@ -3,7 +3,7 @@
 
 # oku2023dmn
 Code for a manuscipt of the default mode network in common marmoset.<br>
-Takuto Okuno, Noritaka Ichinohe, Alexander Woodward (2023)
+Takuto Okuno, Noritaka Ichinohe, Alexander Woodward (2024)
 ["A reappraisal of the default mode and frontoparietal networks in the common marmoset brain"](https://www.frontiersin.org/articles/10.3389/fnimg.2023.1345643/full)
 
 ## Requirements: Software
