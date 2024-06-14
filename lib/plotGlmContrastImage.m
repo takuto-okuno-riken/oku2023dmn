@@ -117,18 +117,33 @@ function [Tth, Vts, Vfs, Tmaxs, Tcnts] = plotGlmContrastImage(contnames, Ts, thP
 
         % clustering threshold
         if extK > 0
-            BW = V2p + V2m; BW(isnan(BW)) = 0;
-            filter = images.internal.getBinaryConnectivityMatrix(conn);
-            BWconv = ( convn(single(BW),filter,'same') >= cdt ) & logical(BW); % find clusters of voxels with more than CDT neighbors
-            L = bwlabeln(BWconv,conn);
             b = 0.5334942;
-            clFull = max(L(:));
+            filter = images.internal.getBinaryConnectivityMatrix(conn);
             cl = {};
-            for k=1:clFull
-                idx = find(L==k);
-                s = length(idx);
-                if s <= extK, V2p(idx) = 0; V2m(idx) = 0; continue; end
-                cl{end+1} = s;
+            peaks = {};
+            for ii=1:2
+                if ii==1, BW = V2p; else BW = V2m; end
+                BW(isnan(BW)) = 0;
+                BWconv = ( convn(single(BW),filter,'same') >= cdt ) & logical(BW); % find clusters of voxels with more than CDT neighbors
+                L = bwlabeln(BWconv,conn);
+                clFull = max(L(:));
+                for k=1:clFull
+                    idx = find(L==k);
+                    s = length(idx);
+                    if s <= extK
+                        if ii==1, V2p(idx) = 0; else V2m(idx) = 0; end
+                        continue;
+                    end
+                    cl{end+1} = s;
+                    if ii==1
+                        [pV, I] = max(V2p(idx));
+                    else
+                        [pV, I] = max(V2m(idx)); pV = -pV;
+                    end
+                    pI = idx(I);
+                    [i1,i2,i3] = ind2sub(size(V2p), pI);
+                    peaks{end+1} = [i1, i2, i3, pV];
+                end
             end
             clExp = length(cl); %expected cluster number
             p = exp(-b * power(extK/resel * cdt*(cdt*cdt-1),2/3)); % uncorrected
@@ -142,7 +157,8 @@ function [Tth, Vts, Vfs, Tmaxs, Tcnts] = plotGlmContrastImage(contnames, Ts, thP
                 if strcmp(clCorrMeth,'poisson'), Pcr = min(1, 1-poisscdf(0,(clExp + eps)*p)); % Poisson clumping heuristic
                 elseif strcmp(clCorrMeth,'sidak'), Pcr = min(1, 1-(1-p)^clExp); % Šidák correction
                 else, Pcr = min(1, p * clExp); end % Bonferroni correction
-                disp([num2str(k) ') k=' num2str(cl{k}) ' voxels, P uncorr=' num2str(p) ', P fwe-corr=' num2str(Pcr)]);
+                pk = peaks{k};
+                disp([num2str(k) ') k=' num2str(cl{k}) ' voxels, P uncorr=' num2str(p) ', P fwe-corr=' num2str(Pcr) ', peak (' num2str(pk(1)) ',' num2str(pk(2)) ',' num2str(pk(3)) ')=' num2str(pk(4))]);
             end
         end
         V2p(V2p==0) = nan; % set nan to visibility
