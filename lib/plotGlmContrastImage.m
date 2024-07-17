@@ -195,6 +195,8 @@ function [Tth, Vts, Vfs, Tmaxs, Tcnts] = plotGlmContrastImage(contnames, Ts, thP
         end
 
         if ~isempty(flatXY)
+            T2p = T2; T2m = -T2;
+            T2p(T2p<Tth) = nan; T2m(T2m<Tth) = nan;   % thresholded T-value
             figure; plotNifti3Dflatmap(T2p, atlasV, isMask, flatXY, 10, rangePlus, cmap, [0.1 0.1 0.1], [0 0 0]);
             title(['GLM contrast (plus) of ' sessionName ' : ' contnames{j}]);
 
