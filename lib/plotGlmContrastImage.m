@@ -41,7 +41,7 @@ function [Tth, Vts, Vfs, Tmaxs, Tcnts] = plotGlmContrastImage(contnames, Ts, thP
     % init threshold parameters
     df = thParam{1}; Pth = thParam{2}; corrMeth = 'none';
     if length(thParam)>=3, corrMeth = thParam{3}; end
-    extK = 0; rFW = []; conn = 18; cdt = 4; clCorrMeth = 'poisson';
+    extK = 0; rFW = []; conn = 6; cdt = 3; clCorrMeth = 'poisson';
     if length(clParam)>=1, extK = clParam{1}; end
     if length(clParam)>=2, rFW = clParam{2}; end
     if length(clParam)>=3, cdt = clParam{3}; end
@@ -123,8 +123,9 @@ function [Tth, Vts, Vfs, Tmaxs, Tcnts] = plotGlmContrastImage(contnames, Ts, thP
             peaks = {};
             for ii=1:2
                 if ii==1, BW = V2p; else BW = V2m; end
-                BW(isnan(BW)) = 0;
+                BW(isnan(BW)) = 0; BW(BW>0) = 1;
                 BWconv = ( convn(single(BW),filter,'same') >= cdt ) & logical(BW); % find clusters of voxels with more than CDT neighbors
+                if ii==1, V2p = V2p.*BWconv; else V2m = V2m.*BWconv; end
                 L = bwlabeln(BWconv,conn);
                 clFull = max(L(:));
                 for k=1:clFull
